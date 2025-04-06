@@ -1,0 +1,32 @@
+import serial
+import csv
+import datetime
+import queue  # Import queue for data exchange
+
+def DataLogger(data_queue):
+    # Serial port configuration (replace with your settings)
+    ser = serial.Serial('COM5', 9600)
+
+    # CSV file configuration
+    csv_file = open('sensor_data.csv', 'a', newline='')
+    csv_writer = csv.writer(csv_file)
+    csv_writer.writerow(['Date', 'Time', 'LDR', 'Soil Moisture', 'Humidity', 'Temperature'])
+
+    try:
+        while True:
+            data = ser.readline().decode('utf-8').strip()
+            if data:
+                values = data.split(',')
+                if len(values) == 4:
+                    ldr, soil_moisture, humidity, temperature = map(float, values)
+                    current_time = datetime.datetime.now()
+
+                    # Write data to CSV file
+                    csv_writer.writerow([current_time.strftime('%Y-%m-%d'), current_time.strftime('%H:%M:%S'), ldr, soil_moisture, humidity, temperature])
+                    print(f"Data logged: {data}")
+
+                    # Add data to the queue for plotting
+                    data_queue.put([ldr, soil_moisture, humidity, temperature])
+
+    finally:
+        csv_file.close()
